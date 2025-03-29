@@ -29,24 +29,32 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # Set up .NET Core SDK
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+      # Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore Demo.BlazorWasmApp/Demo.BlazorWasmApp.csproj
+
+      # Build the project
+      - name: Build the project
+        run: dotnet publish Demo.BlazorWasmApp/Demo.BlazorWasmApp.csproj -c Release -o artifacts
+
+      # Upload GitHub Pages artifact
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3.0.1
         with:
           # Artifact name
           name: github-pages # optional, default is github-pages
           # Path of the directory containing the static assets.
-          path: wwwroot # default is _site/
+          path: artifacts # default is _site/
           # Duration after which artifact will expire in days.
           retention-days: 1 # optional, default is 1
+
+      # Deploy GitHub Pages site
       - name: Deploy GitHub Pages site
         uses: actions/deploy-pages@v4.0.5
         with:

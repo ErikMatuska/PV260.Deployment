@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/PV260.Deployment.props" />
-</Project>
