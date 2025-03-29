@@ -50,7 +50,7 @@ jobs:
           # Artifact name
           name: github-pages # optional, default is github-pages
           # Path of the directory containing the static assets.
-          path: artifacts # default is _site/
+          path: artifacts/wwwroot # default is _site/
           # Duration after which artifact will expire in days.
           retention-days: 1 # optional, default is 1
 
