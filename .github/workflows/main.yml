@@ -47,8 +47,9 @@ jobs:
         run: dotnet publish Demo.BlazorWasmApp/Demo.BlazorWasmApp.csproj -c Release -o artifacts
 
       # Set base href for GitHub Pages using the repository name
-      - name: Set base href for GitHub Pages
-        run: sed -i 's|<base href="/" />|<base href="/${{ github.event.repository.name }}/" />|' artifacts/wwwroot/index.html
+      # Temp disable
+      # - name: Set base href for GitHub Pages
+      #   run: sed -i 's|<base href="/" />|<base href="/${{ github.event.repository.name }}/" />|' artifacts/wwwroot/index.html
 
       # Run tests
       - name: Run tests
