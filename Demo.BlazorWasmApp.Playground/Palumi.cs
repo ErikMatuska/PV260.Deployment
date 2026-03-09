@@ -1,53 +1,95 @@
-// See https://aka.ms/new-console-template for more information
+// Pulumi – Infrastructure as Code example for Azure
+// Docs: https://www.pulumi.com/docs/clouds/azure/
+//
+// This stack provisions:
+//   1. Resource Group   – logical container for all Azure resources
+//   2. Storage Account  – blob storage (e.g. for static files or backups)
+//   3. App Service Plan – defines the region and pricing tier
+//   4. Web App   – hosts the Blazor WASM application
+//
+// Run with:  pulumi up
+
 using Pulumi;
 using Pulumi.AzureNative.Resources;
+using Pulumi.AzureNative.Storage;
+using Pulumi.AzureNative.Storage.Inputs;
 using Pulumi.AzureNative.Web;
 using Pulumi.AzureNative.Web.Inputs;
 
-Console.WriteLine("Hello, World!");
+await Pulumi.Deployment.RunAsync<AppStack>();
 
-await Deployment.RunAsync<MyStack>();
-
-class MyStack : Stack
+class AppStack : Stack
 {
-    public MyStack()
+    public AppStack()
     {
-        // Create an Azure Resource Group
-        var resourceGroup = new ResourceGroup("resourceGroup");
+        // ── 1. Resource Group ────────────────────────────────────────────
+        // Every Azure resource must belong to a resource group.
+        var resourceGroup = new ResourceGroup("rg-blazor-demo", new ResourceGroupArgs
+        {
+            Location = "westeurope",
+        });
 
-        // Create an App Service Plan
-        var appServicePlan = new AppServicePlan("appServicePlan", new AppServicePlanArgs
+        // ── 2. Storage Account ───────────────────────────────────────────
+        // Used for storing static assets or application backups.
+        var storageAccount = new StorageAccount("stblazdemo", new StorageAccountArgs
         {
             ResourceGroupName = resourceGroup.Name,
-            Sku = new SkuDescriptionArgs
+            Location = resourceGroup.Location,
+            Kind = Kind.StorageV2,
+            Sku = new Pulumi.AzureNative.Storage.Inputs.SkuArgs
             {
-                Name = "B1",
-                Tier = "Basic"
+                Name = SkuName.Standard_LRS,  // Locally redundant – cheapest option
             },
         });
 
-        // Create the App Service
-        var app = new WebApp("blazorApp", new WebAppArgs
+        // ── 3. App Service Plan ──────────────────────────────────────────
+        // Defines what hardware/pricing tier the Web App runs on.
+        var appServicePlan = new AppServicePlan("plan-blazor-demo", new AppServicePlanArgs
         {
             ResourceGroupName = resourceGroup.Name,
-            ServerFarmId = appServicePlan.Id,
+            Location = resourceGroup.Location,
+            Sku = new SkuDescriptionArgs
+            {
+                Name = "B1",    // Basic tier – suitable for demos and dev
+                Tier = "Basic",
+            },
+        });
+
+        // ── 4. Web App ───────────────────────────────────────────────────
+        // The actual application host. References the plan created above.
+        var webApp = new WebApp("app-blazor-demo", new WebAppArgs
+        {
+            ResourceGroupName = resourceGroup.Name,
+            Location = resourceGroup.Location,
+            ServerFarmId = appServicePlan.Id,   // link to the plan
+            HttpsOnly = true,
             SiteConfig = new SiteConfigArgs
             {
                 AppSettings = new[]
                 {
                     new NameValuePairArgs
-                    {
-                        Name = "WEBSITE_RUN_FROM_PACKAGE",
-                        Value = "1",
+                        {
+                            Name  = "WEBSITE_RUN_FROM_PACKAGE",
+                            Value = "1",   // app is deployed as a zip package
+                        },
+                        new NameValuePairArgs
+                        {
+                            Name  = "StorageAccountName",
+                            Value = storageAccount.Name,   // Output<T> – resolved at deploy time
                     },
                 },
             },
         });
 
-        // Output the endpoint
-        this.Endpoint = app.DefaultHostName.Apply(endpoint => $"https://{endpoint}");
+        // ── Outputs ──────────────────────────────────────────────────────
+        // These values are printed after `pulumi up` and saved in the stack state.
+        AppUrl = webApp.DefaultHostName.Apply(h => $"https://{h}");
+        StorageAccountName = storageAccount.Name;
     }
 
-    [Output]
-    public Output<string> Endpoint { get; set; }
+    /// <summary>Public HTTPS URL of the deployed Blazor application.</summary>
+    [Output] public Output<string> AppUrl { get; set; }
+
+    /// <summary>Name of the provisioned Storage Account.</summary>
+    [Output] public Output<string> StorageAccountName { get; set; }
 }
