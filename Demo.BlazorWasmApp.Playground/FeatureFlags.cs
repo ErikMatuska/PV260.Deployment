@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.FeatureFilters;
 
-public class Program
+public class NotProgram
 {
     public static async Task Main(string[] args)
     {

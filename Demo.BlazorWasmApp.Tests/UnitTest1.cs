@@ -11,7 +11,7 @@ namespace Demo.BlazorWasmApp.Tests
         public void CounterStartsAtZero()
         {
             // Arrange
-            var cut = RenderComponent<Counter>();
+            var cut = Render<Counter>();
 
             // Act
             var initialCount = cut.Find("p").TextContent;
@@ -24,7 +24,7 @@ namespace Demo.BlazorWasmApp.Tests
         public void ClickingButtonIncrementsCounter()
         {
             // Arrange
-            var cut = RenderComponent<Counter>();
+            var cut = Render<Counter>();
 
             // Act
             cut.Find("button").Click();
